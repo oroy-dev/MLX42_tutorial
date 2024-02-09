@@ -1,0 +1,26 @@
+
+# object files and archives in all directories
+*.o
+*.a
+*.s
+
+# PDFs
+*.pdf
+
+# MacOS specific files
+*.dSYM
+.DS_Store
+
+# Visual Studio Code settings
+.vscode
+
+# tmp, and obj directories in all directories
+**/tmp/
+**/obj/
+
+# Sentinel files
+.init_check
+.testfile
+
+# # Executables
+cub3D
