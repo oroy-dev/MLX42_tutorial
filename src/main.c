@@ -6,7 +6,7 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 13:43:54 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/08 19:56:39 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/12 15:03:02 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,22 @@ int main(void)
 
 	cub = init_cub("Color Game");
 
+
+	// testing the get pixel and the color channel format...
+	unsigned int	colortest;
+	colortest = 0xABCDEF;
+	ft_printf("color test: %X\n", colortest); // ABCDEF
+
+	colortest = get_pixel(cub.bg_img, 10, 10);
+	ft_printf("color test: %X\n", colortest); // FA6279EA
+
+	colortest = 0xABCDEF;
+	draw_pixel(cub.bg_img, 10, 10, colortest);
+	colortest = get_pixel(cub.bg_img, 10, 10);
+	ft_printf("color test: %X\n", colortest); // ABCDEFFF
+	// 
+
+	// 
 	cub_loop(&cub);
 
 	mlx_delete_image(cub.mlx, cub.bg_img);

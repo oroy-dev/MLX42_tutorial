@@ -6,14 +6,16 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/08 19:58:05 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/08 20:09:35 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/12 14:35:14 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef ANIMATE_H
 # define ANIMATE_H
 
+# include "cub3d.h"
 # include "libft.h"
+# include "pixels.h"
 # include "MLX42.h"
 
 typedef struct s_animation
@@ -38,12 +40,12 @@ typedef struct sprite_splice
 
 typedef struct s_sprite
 {
-	mlx_image_t	*srpite_img;
+	mlx_image_t	*sprite_img;
 	mlx_t		*mlx;
 }	t_sprite;
 
 /* SPRITES */
-t_sprite	new_sprite(char *filename, mlx_t *mlx);
+t_sprite	new_sprite(char *filepath, mlx_t *mlx);
 t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int frames, int delay);
 void		destroy_sprite(t_sprite *s);
 
