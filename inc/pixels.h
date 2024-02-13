@@ -6,15 +6,15 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 13:51:21 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/12 14:37:38 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/12 21:33:36 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PIXELS_H
 # define PIXELS_H
 
-# include "MLX42.h" // mlx_image_t
 # include "libft.h" // data type macros (like t_u32 for unsigned int) in libft_utils.h
+# include "MLX42.h" // mlx_image_t
 
 /* bytes per pixel */
 # define PIXEL_SIZE		4

@@ -6,11 +6,11 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 14:48:29 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/12 14:41:24 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/12 21:40:23 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pixels.h"
+#include "game.h"
 
 /*
 sets the alpha channel to 0xFF
@@ -62,21 +62,28 @@ void	draw_pixel(mlx_image_t *img, t_u32 x, t_u32 y, t_u32 color)
 Retrieves the color value from the specified pixel address in ARGB format,
 combining four individual bytes back into a t_u32.
 */
-static t_u32	get_pixel_color(t_u8 *pixel)
+// static t_u32	get_pixel_color(t_u8 *pixel)
+// {
+// 	t_u32	a;
+// 	t_u32	r;
+// 	t_u32	g;
+// 	t_u32	b;
+
+// 	// Extract each color component from the pixel
+// 	a = (t_u32)pixel[ALPHA_OFFSET] << 24;
+// 	r = (t_u32)pixel[RED_OFFSET] << 16;
+// 	g = (t_u32)pixel[GREEN_OFFSET] << 8;
+// 	b = (t_u32)pixel[BLUE_OFFSET];
+
+// 	// Combine the color components into a single t_u32 color value
+// 	return (a | r | g | b);
+// }
+
+static t_u32	get_rgba(int r, int g, int b, int a)
+// static t_u32	get_rgba(int a, int r, int g, int b)
 {
-	t_u32	a;
-	t_u32	r;
-	t_u32	g;
-	t_u32	b;
-
-    // Extract each color component from the pixel
-    a = (t_u32)pixel[ALPHA_OFFSET] << 24;
-    r = (t_u32)pixel[RED_OFFSET] << 16;
-    g = (t_u32)pixel[GREEN_OFFSET] << 8;
-    b = (t_u32)pixel[BLUE_OFFSET];
-
-    // Combine the color components into a single t_u32 color value
-	return (a | r | g | b);
+	// return (r << 24 | g << 16 | b << 8 | a);
+	return (a << 24 | r << 16 | g << 8 | b);
 }
 
 /*
@@ -85,13 +92,14 @@ t_u32	get_pixel(mlx_image_t *img, t_u32 x, t_u32 y)
 {
 	t_u8	*pixel;
 
-    if (img)
+	if (img)
 	{
-        if (x < img->width && y < img->height)
+		if (x < img->width && y < img->height)
 		{
-            pixel = &img->pixels[(y * img->width + x) * PIXEL_SIZE];
-            return (get_pixel_color(pixel));
-        }
+			pixel = &img->pixels[(y * img->width + x) * PIXEL_SIZE];
+			// return (get_pixel_color(pixel));
+			return (get_rgba(*(pixel), *(pixel + 1), *(pixel + 2), *(pixel + 3)));
+		}
 		// error: Pixel is out of bounds
 		return (rgba(0x000000));
 	}
@@ -312,3 +320,31 @@ t_u32	get_pixel(mlx_image_t *img, t_u32 x, t_u32 y)
 //   return (get_rgba(*(pixel), *(pixel + 1), *(pixel + 2), *(pixel + 3)));
 // }
 // */
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+/* ************************************************************************** */
+
+/*
+simple line drawing function
+
+example with a small diagonal green line:
+draw_line(img, (t_point){0, 0}, (t_point){100, 100}, 0x00FF00);
+*/
+void	draw_line(mlx_image_t *img, t_point start, t_point end, int color)
+{
+	t_point	step;
+	int		max;
+
+	step.x = end.x - start.x;
+	step.y = end.y - start.y;
+	max = ft_max(ft_abs(step.x), ft_abs(step.y));
+	step.x /= max;
+	step.y /= max;
+	while ((int)(start.x - end.x) || (int)(start.y - end.y))
+	{
+		draw_pixel(img, start.x, start.y, color);
+		start.x += step.x;
+		start.y += step.y;
+	}
+}

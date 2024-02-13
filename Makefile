@@ -6,10 +6,14 @@
 #    By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/20 12:42:23 by cdumais           #+#    #+#              #
-#    Updated: 2024/02/08 17:41:50 by cdumais          ###   ########.fr        #
+#    Updated: 2024/02/12 21:28:42 by cdumais          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
+# TOCHECK: using evaluator image in sgoinfre
+# TODO: change format for uname in .init_check
+# compilation example without makefile and flags
+# gcc -fsanitize=address src/image_utils.c src/animate.c src/pixels.c src/main.c -ldl -L/Users/cdumais/.brew/opt/glfw/lib -lglfw -lm -lpthread -Llib/MLX42/build -lmlx42 -Llib/libft/ -lft -Ilib/MLX42/include/MLX42 -Ilib/libft/inc -Iinc
 # **************************************************************************** #
 # --------------------------------- VARIABLES -------------------------------- #
 # **************************************************************************** #
