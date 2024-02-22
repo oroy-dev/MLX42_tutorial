@@ -6,14 +6,14 @@
 #    By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/20 12:42:23 by cdumais           #+#    #+#              #
-#    Updated: 2024/02/22 17:43:29 by cdumais          ###   ########.fr        #
+#    Updated: 2024/02/22 17:49:18 by cdumais          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 # **************************************************************************** #
 # --------------------------------- VARIABLES -------------------------------- #
 # **************************************************************************** #
-AUTHOR		:= cdumais
+AUTHOR		:= cdumais (but really pulgamecanica...)
 NAME		:= colorgame
 
 CFG_DIR		:= cfg
@@ -163,8 +163,11 @@ mlxclean:
 mlxref:
 	@$(OPEN) "https://github.com/codam-coding-college/MLX42/tree/master/docs"
 
+TUTO1	:= "https://pulgamecanica.herokuapp.com/posts/mlx42-intro"
+TUTO2	:= "https://pulgamecanica.herokuapp.com/posts/mlx42-game-development"
+
 tuto:
-	@$(OPEN) "https://pulgamecanica.herokuapp.com/posts/mlx42-intro"
+	@$(OPEN) $(TUTO1) $(TUTO1)
 
 .PHONY: mlxclean mlxref tuto
 # **************************************************************************** #
