@@ -6,7 +6,7 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/08 20:10:35 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/12 20:10:03 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/22 17:31:37 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ static void	add_frame(t_animation *a, t_sprite *s, sprite_slice slice, int mirro
 	ft_lstadd_back(&a->frames, ft_lstnew(frame));
 }
 
-t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int frames, int delay)
+t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int frames, int frame_speed)
 {
 	t_animation	*a;
 	int			i;
@@ -76,7 +76,7 @@ t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int fra
 	a = (t_animation*)ft_calloc(sizeof(t_animation), 1);
 	if (!a)
 		error();
-	*a = (t_animation){NULL, delay, 0, 0, mirrored, 0};
+	*a = (t_animation){NULL, frame_speed, 0, 0, mirrored, 0, 0};
 	i = 0;
 	while (i < frames)
 	{
@@ -91,8 +91,6 @@ t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int fra
 	}
 	return (a);
 }
-
-// 
 
 /*
 the delta time will tell us how much time has passed

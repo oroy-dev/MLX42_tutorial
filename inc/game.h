@@ -15,25 +15,36 @@
 
 # include "libft.h"
 # include "MLX42.h"
-# include "pixels.h"
 # include <math.h>
+
+# define ESC 256
+
+# define PIXEL_SIZE		4
 
 # define TUTO_WIDTH		640
 # define TUTO_HEIGHT	360
+# define SELECTION_LEN	2
+# define DIFFICULTY_LEN	3
 
-/*
-2d vector (x, y)
-*/
-typedef struct s_point
+enum game_status
 {
-	float	x;
-	float	y;
-}	t_point;
+	MENU,
+	PLAYING
+};
 
-/* ************************************************************************** */
+enum menu_selection
+{
+	SELECT_PLAY,
+	SELECT_DIFFICULTY
+};
 
-/* to be in animate.h
-*/
+enum game_difficulty
+{
+	EASY,
+	MEDIUM,
+	HARD
+};
+
 typedef struct s_animation
 {
 	t_list		*frames;
@@ -41,6 +52,7 @@ typedef struct s_animation
 	double		accumulator; //to control the speed
 	int			current_frame_num; //which frame is selected
 	int			mirrored;
+	long int	updated_at; //when was the last update
 	long int	frame_count;
 }	t_animation;
 
@@ -52,7 +64,7 @@ typedef struct sprite_splice
 	int	height;
 	int	padding_x;
 	int	padding_y;
-}	sprite_slice;
+}		sprite_slice;
 
 typedef struct s_sprite
 {
@@ -60,31 +72,31 @@ typedef struct s_sprite
 	mlx_t		*mlx;
 }	t_sprite;
 
-/* ************************************************************************** */
-
 typedef struct s_game
 {
-	mlx_t			*mlx;
-	mlx_image_t		*bg_img; //menu background image
-	mlx_image_t		*foreground;
-	t_animation		*select_animation;
-	// int				fps;
-}	t_game;
+	mlx_t					*mlx;
+	mlx_image_t				*menu_bg_img;
+	mlx_image_t				*game_bg_img;
+	mlx_image_t				*foreground;
+	mlx_image_t				*difficulty_imgs[DIFFICULTY_LEN];
+	t_animation				*select_animation;
+	enum menu_selection		menu_selection;
+	enum game_status		game_status;
+	enum game_difficulty	game_difficulty;
+}							t_game;
+
+void	draw_pixel(mlx_image_t *img, int x, int y, int color);
+int		get_pixel(mlx_image_t* img, t_u32 x, t_u32 y);
+void	put_img_to_img(mlx_image_t *dst, mlx_image_t *src, int x, int y);
 
 
-/* animation.c
-*/
 t_sprite	new_sprite(char *filepath, mlx_t *mlx);
-t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int frames, int delay);
 void		destroy_sprite(t_sprite *s);
-// 
+t_animation	*slice_sprite(t_sprite *s, sprite_slice slice, int mirrored, int frames, int frame_speed);
 void		update_animation(t_animation *a, double delta_time);
 
 
-void	put_img_to_img(mlx_image_t *dst, mlx_image_t *src, int x, int y);
-
 void	error(void);
 
-void	draw_line(mlx_image_t *img, t_point start, t_point end, int color);
 
 #endif

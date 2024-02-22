@@ -6,21 +6,18 @@
 #    By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/20 12:42:23 by cdumais           #+#    #+#              #
-#    Updated: 2024/02/12 21:28:42 by cdumais          ###   ########.fr        #
+#    Updated: 2024/02/22 17:43:29 by cdumais          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-# TOCHECK: using evaluator image in sgoinfre
-# TODO: change format for uname in .init_check
-# compilation example without makefile and flags
-# gcc -fsanitize=address src/image_utils.c src/animate.c src/pixels.c src/main.c -ldl -L/Users/cdumais/.brew/opt/glfw/lib -lglfw -lm -lpthread -Llib/MLX42/build -lmlx42 -Llib/libft/ -lft -Ilib/MLX42/include/MLX42 -Ilib/libft/inc -Iinc
 # **************************************************************************** #
 # --------------------------------- VARIABLES -------------------------------- #
 # **************************************************************************** #
 AUTHOR		:= cdumais
-NAME		:= Tutorial
-MAP			:= $(TBD)
+NAME		:= colorgame
 
+CFG_DIR		:= cfg
+IMG_DIR		:= img
 INC_DIR		:= inc
 LIB_DIR		:= lib
 OBJ_DIR		:= obj
@@ -36,7 +33,6 @@ REMOVE		:= rm -rf
 NPD			:= --no-print-directory
 VOID		:= /dev/null
 OS			:= $(shell uname)
-
 # **************************************************************************** #
 # ---------------------------------- LIBFT ----------------------------------- #
 # **************************************************************************** #
@@ -58,13 +54,14 @@ HEADERS		:= $(HEADERS) -I$(MLX_INC)
 # **************************************************************************** #
 # ---------------------------------- CONFIG  --------------------------------- #
 # **************************************************************************** #
-DEFAULT_W	:= 500
-DEFAULT_H	:= 500
+include $(CFG_DIR)/leaks.mk
+
+SOUND		:=
 
 ifeq ($(OS),Linux)
-include config_linux.mk
+include $(CFG_DIR)/config_linux.mk
 else ifeq ($(OS),Darwin)
-include config_mac.mk
+include $(CFG_DIR)/config_mac.mk
 else
 $(error Unsupported operating system: $(OS))
 endif
@@ -94,8 +91,7 @@ INIT		:= $(if $(wildcard $(INIT_CHECK)),,init_submodules)
 # **************************************************************************** #
 INCS	:=	$(wildcard $(INC_DIR)/*.h)
 SRCS	:=	$(wildcard $(SRC_DIR)/*.c)
-OBJS	:=	$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
-# OBJS	:=	$(SRCS:$(SRC_DIR)/.c=$(OBJ_DIR)/.o) #instead of patsubst ?
+OBJS	:=	$(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 # **************************************************************************** #
 # ---------------------------------- RULES ----------------------------------- #
 # **************************************************************************** #
@@ -103,7 +99,7 @@ all: $(INIT) $(NAME)
 
 $(NAME): $(MLX42) $(LIBFT) $(OBJS) $(INCS)
 	@$(COMPILE) $(C_FLAGS) $(HEADERS) $(OBJS) $(LIBFT) $(L_FLAGS) -o $@
-	@echo "$(GREEN)$$TITLE$(RESET)"
+	@echo "$$TITLE"
 
 $(LIBFT):
 	@$(MAKE) -C $(LIBFT_DIR) $(NPD)
@@ -148,6 +144,7 @@ fclean: clean
 re: fclean all
 
 bonus:
+	@echo "feature not yet implemented..."
 
 .PHONY: all clean fclean re bonus
 # **************************************************************************** #
@@ -163,7 +160,13 @@ mlxclean:
 		$(YELLOW)No library to remove$(RESET)"; \
 	fi
 
-.PHONY: mlxclean
+mlxref:
+	@$(OPEN) "https://github.com/codam-coding-college/MLX42/tree/master/docs"
+
+tuto:
+	@$(OPEN) "https://pulgamecanica.herokuapp.com/posts/mlx42-intro"
+
+.PHONY: mlxclean mlxref tuto
 # **************************************************************************** #
 # ----------------------------------- GIT ------------------------------------ #
 # **************************************************************************** #
@@ -173,7 +176,8 @@ WHEN	:= $(shell date "+On day %d of month %m in the year %Y at %H:%M and %S seco
 
 $(INIT_CHECK):
 	@git submodule update --init --recursive
-	@echo "$(NAME) by $(AUTHOR)\n\
+	@echo "$(NAME)\n\
+	by $(AUTHOR)\n\
 	Compiled for $(USER)\n\
 	$(WHEN)\n\
 	$(MACHINE)" > $@
@@ -219,115 +223,41 @@ nm: $(NAME)
 # **************************************************************************** #
 # ---------------------------------- PDF ------------------------------------- #
 # **************************************************************************** #
-# TODO: Add a check that if it exists, do not curl it, just open it..
 PDF		:= cub3d_en.pdf
 GIT_URL	:= https://github.com/SaydRomey/42_ressources
-PDF_URL	= $(GIT_URL)/blob/main/pdf/$(PDF)?raw=true
+PDF_URL	:= $(GIT_URL)/blob/main/pdf/$(PDF)?raw=true
 
 pdf: | $(TMP_DIR)
-	@curl -# -L $(PDF_URL) -o $(TMP_DIR)/$(PDF)
+	@if [ -f $(TMP_DIR)/$(PDF) ]; then \
+		echo "Opening $(PDF)..."; \
+	else \
+		echo "Downloading $(PDF)..."; \
+		curl -# -L $(PDF_URL) -o $(TMP_DIR)/$(PDF); \
+	fi
 	@$(OPEN) $(TMP_DIR)/$(PDF)
 
 .PHONY: pdf
-# **************************************************************************** #
-# -------------------------------- LEAKS ------------------------------------- #
-# **************************************************************************** #
-VAL_CHECK	:= $(shell which valgrind > $(VOID); echo $$?)
-
-# valgrind options
-ORIGIN		:= --track-origins=yes
-LEAK_CHECK	:= --leak-check=full
-LEAK_KIND	:= --show-leak-kinds=all
-
-# valgrind additional options
-CHILDREN	:= --trace-children=yes
-FD_TRACK	:= --track-fds=yes
-HELGRIND	:= --tool=helgrind
-NO_REACH	:= --show-reachable=no
-VERBOSE		:= --verbose
-VAL_LOG		:= valgrind-out.txt
-LOG_FILE	:= --log-file=$(VAL_LOG)
-
-# suppression-related options
-SUPP_FILE	:= suppression.supp
-SUPP_GEN	:= --gen-suppressions=all
-SUPPRESS	:= --suppressions=$(SUPP_FILE)
-
-# default valgrind tool
-BASE_TOOL	= valgrind $(ORIGIN) $(LEAK_CHECK) $(LEAK_KIND)
-# **************************************************************************** #
-# specific valgrind tool (add 'valgrind option' variables as needed)
-BASE_TOOL	+= 
-# **************************************************************************** #	TODO: check if we should put messages as an echo instead of a target
-LEAK_TOOL	= $(BASE_TOOL) $(LOG_FILE)
-SUPP_TOOL	= $(BASE_TOOL) $(SUPP_GEN) $(LOG_FILE)
-
-# run valgrind
-leaks_msg:
-	@echo "[$(BOLD)$(PURPLE)valgrind$(RESET)] \
-	$(ORANGE)\tRecompiling with debug flags$(RESET)"
-
-leaks: leaks_msg debug
-	@if [ $(VAL_CHECK) -eq 0 ]; then \
-		echo "[$(BOLD)$(PURPLE)valgrind$(RESET)] \
-		$(ORANGE)Launching valgrind\n$(RESET)#"; \
-		$(LEAK_TOOL) ./$(NAME) $(ARGS); \
-		echo "#\n[$(BOLD)$(PURPLE)valgrind$(RESET)] \
-		$(ORANGE)info in: $(CYAN)$(VAL_LOG)$(RESET)"; \
-	else \
-		echo "Please install valgrind to use the 'leaks' feature"; \
-	fi
-
-# generate suppression file
-supp_msg:
-	@echo "generating suppression file"
-supp: leaks_msg supp_msg debug
-	$(SUPP_TOOL) ./$(NAME) $(ARGS) && \
-	awk '/^{/,/^}/' valgrind-out.txt > suppression.supp
-
-# use suppression file
-suppleaks_msg:
-	@echo "launching valgrind with suppression file"
-suppleaks: debug
-	$(LEAK_TOOL) $(SUPPRESS) ./$(NAME) $(ARGS)
-
-# remove suppression and log files
-vclean:
-	@if [ -n "$(wildcard suppression.supp)" ]; then \
-		$(REMOVE) $(SUPP_FILE); \
-		echo "[$(BOLD)$(PURPLE)$(NAME)$(RESET)] \
-		$(GREEN)suppression file removed$(RESET)"; \
-	else \
-		echo "[$(BOLD)$(PURPLE)$(NAME)$(RESET)] \
-		$(YELLOW)no suppression file to remove$(RESET)"; \
-	fi
-	@if [ -n "$(wildcard valgrind-out.txt)" ]; then \
-		$(REMOVE) valgrind-out.txt; \
-		echo "[$(BOLD)$(PURPLE)$(NAME)$(RESET)] \
-		$(GREEN)log file removed$(RESET)"; \
-	else \
-		echo "[$(BOLD)$(PURPLE)$(NAME)$(RESET)] \
-		$(YELLOW)no log file to remove$(RESET)"; \
-	fi
-
-.PHONY: leaks_msg leaks supp_msg supp suppleaks_msg suppleaks vclean
 # **************************************************************************** #
 # ---------------------------------- UTILS ----------------------------------- #
 # **************************************************************************** #
 run: all
 	./$(NAME) $(MAP)
 
-debug: C_FLAGS += -g
-debug: re
+FORCE_FLAGS	:= -Wno-unused-variable
+
+force: C_FLAGS += $(FORCE_FLAGS)
+force: re
+	@echo "adding flags $(YELLOW)$(FORCE_FLAGS)$(RESET)"
+	@echo "$(RED)Forced compilation$(RESET)"
 
 $(TMP_DIR):
 	@mkdir -p $(TMP_DIR)
-
+# **************************************************************************** #
 ffclean: fclean vclean mlxclean
 	@$(MAKE) fclean -C $(LIBFT_DIR) $(NPD)
 	@$(REMOVE) $(TMP_DIR) $(INIT_CHECK) $(NAME).dSYM
 
-.PHONY: run debug ffclean
+.PHONY: run force ffclean
 # **************************************************************************** #
 # ---------------------------------- BACKUP (zip) ---------------------------- #
 # **************************************************************************** #
@@ -353,14 +283,29 @@ zip: ffclean
 # **************************************************************************** #
 define MAN
 
-(...)
+Available 'make' targets:
 
-'make info'   -> Prints compilation information
-'make pdf'    -> curls/open a $(NAME) instruction pdf in $(CYAN)$(TMP_DIR)$(RESET)
-'make update' -> Pull the github version"
-'make man' \t-> Show this message
-
-(...)
+'make [all]'   -> Compiles $(NAME) and necessary dependencies (libft and MLX42)
+'make clean'   -> Removes the $(OBJ_DIR)/ directory and other object files
+'make fclean'  -> Removes $(NAME) and $(LIBFT)
+'make re'      -> Same as fclean and all
+'make update'  -> Pulls the github version
+'make norm'    -> Runs 'norminette' on the files in $(SRC_DIR)/ and $(INC_DIR)/ (also in libft)
+'make nm'      -> Checks symbols in the executable (to check used functions)
+'make pdf'     -> Downloads/Opens a $(NAME) instruction pdf in $(TMP_DIR)/
+'make mlxref'  -> Opens the MLX42 documentation
+'make tuto'    -> Opens the tutorial by $(PURPLE)pulgamecanica$(RESET)
+'make leaks'   -> (WIP) Runs Valgrind on $(NAME) $(MAP) (make supp and make suppleaks)
+'make run'     -> Same as 'make all', then './$(NAME) $(MAP)'
+'make debug'   -> (WIP) Recompiles with debug symbols
+'make force'   -> Recompiles with $(YELLOW)$(FORCE_FLAGS)$(RESET) (for testing)
+'make ffclean' -> Removes files and directories created by this makefile
+'make zip'     -> Creates a compressed version of this project on the desktop
+'make info'    -> Prints compilation information
+'make title'   -> Prints an example version of the title
+'make spin'    -> (WIP) Animation that waits for a process to finish
+'make sound'   -> (WIP) Plays a .wav sound
+'make man'     -> Shows this message
 
 endef
 export MAN
@@ -412,183 +357,32 @@ info:
 .PHONY: info
 # **************************************************************************** #
 # ----------------------------------- DECO ----------------------------------- #
-# **************************************************************************** #
+# **************************************************************************** # 
 define TITLE
+[$(BOLD)$(PURPLE)$@$(RESET)]\t\t$(GREEN)ready$(RESET)
+$(ORANGE)
+***************
+* PLACEHOLDER *
+***************
+$(RESET)
 
-$@ is ready
+type 'make run' to execute
+or   'make man' for more options
 
 endef
 export TITLE
+
+USER		:=$(shell whoami)
+TIME		:=$(shell date "+%H:%M:%S")
+
+title:
+	@echo "$$TITLE"
+	@echo "Compiled for $(ITALIC)$(BOLD)$(PURPLE)$(USER)$(RESET) \
+		$(CYAN)$(TIME)$(RESET)\n"
+
+.PHONY: title
 # **************************************************************************** #
-# ----------------------------------- CUBE ----------------------------------- #
-# **************************************************************************** #
-# https://www.asciiart.eu/art-and-design/geometries
-
-define HASH_CUBE
-      #########.
-     ########",#:
-   #########',##".
-  ##'##'## .##',##.
-   ## ## ## # ##",#.
-    ## ## ## ## ##'
-     ## ## ## :##
-      ## ## ##."
-endef
-export HASH_CUBE
-
-
-
-define ALL_FRAMES
-+------+.      +------+       +------+       +------+      .+------+
-|`.    | `.    |\     |\      |      |      /|     /|    .' |    .'|
-|  `+--+---+   | +----+-+     +------+     +-+----+ |   +---+--+'  |
-|   |  |   |   | |    | |     |      |     | |    | |   |   |  |   |
-+---+--+.  |   +-+----+ |     +------+     | +----+-+   |  .+--+---+
- `. |    `.|    \|     \|     |      |     |/     |/    |.'    | .'
-   `+------+     +------+     +------+     +------+     +------+'
-   .+------+     +------+     +------+     +------+     +------+.
- .' |    .'|    /|     /|     |      |     |\     |\    |`.    | `.
-+---+--+'  |   +-+----+ |     +------+     | +----+-+   |  `+--+---+
-|   |  |   |   | |    | |     |      |     | |    | |   |   |  |   |
-|  ,+--+---+   | +----+-+     +------+     +-+----+ |   +---+--+   |
-|.'    | .'    |/     |/      |      |      \|     \|    `. |   `. |
-+------+'      +------+       +------+       +------+      `+------+
-endef
-export ALL_FRAMES
-
-# Frames
-define CUBE_FRAME_1
-+------+.
-|`.    | `.
-|  `+--+---+
-|   |  |   |
-+---+--+.  |
- `. |    `.|
-   `+------+
-endef
-export CUBE_FRAME_1
-
-define CUBE_FRAME_2
-+------+
-|\\     |\\
-| +----+-+
-| |    | |
-+-+----+ |
- \\|     \\|
- +------+
-endef
-export CUBE_FRAME_2
-
-define CUBE_FRAME_3
-+------+
-|      |
-+------+
-|      |
-+------+
-|      |
-+------+
-endef
-export CUBE_FRAME_3
-
-define CUBE_FRAME_4
-  +------+ 
- /|     /| 
-+-+----+ | 
-| |    | | 
-| +----+-+ 
-|/     |/  
-+------+   
-endef
-export CUBE_FRAME_4
-
-define CUBE_FRAME_5
-   .+------+
- .' |    .'|
-+---+--+'  |
-|   |  |   |
-|  .+--+---+
-|.'    | .'
-+------+'
-endef
-export CUBE_FRAME_5
-
-define CUBE_FRAME_6
-   .+------+
- .' |    .'|
-+---+--+'  |
-|   |  |   |
-|  ,+--+---+
-|.'    | .'
-+------+'
-endef
-export CUBE_FRAME_6
-
-define CUBE_FRAME_7
-  +------+ 
- /|     /| 
-+-+----+ | 
-| |    | | 
-| +----+-+ 
-|/     |/  
-+------+   
-endef
-export CUBE_FRAME_7
-
-define CUBE_FRAME_8
-+------+ 
-|      | 
-+------+ 
-|      | 
-+------+ 
-|      | 
-+------+ 
-endef
-export CUBE_FRAME_8
-
-define CUBE_FRAME_9
-+------+   
-|\\     |\\  
-| +----+-+ 
-| |    | | 
-+-+----+ | 
- \\|     \\| 
-  +------+ 
-endef
-export CUBE_FRAME_9
-
-define CUBE_FRAME_10
-+------+.
-|`.    | `.
-|  `+--+---+
-|   |  |   |
-+---+--+   |
- `. |   `. |
-   `+------+
-endef
-export CUBE_FRAME_10
-
-# Animation test
-cube:
-	@clear
-	@for i in 1 2 3 4 5 10 9 8 7 6 1 2 3; do \
-		case $$i in \
-		1) echo "$$CUBE_FRAME_1";;\
-		2) echo "$$CUBE_FRAME_2";;\
-		3) echo "$$CUBE_FRAME_3";;\
-		4) echo "$$CUBE_FRAME_4";;\
-		5) echo "$$CUBE_FRAME_5";;\
-		6) echo "$$CUBE_FRAME_6";;\
-		7) echo "$$CUBE_FRAME_7";;\
-		8) echo "$$CUBE_FRAME_8";;\
-		9) echo "$$CUBE_FRAME_9";;\
-		10) echo "$$CUBE_FRAME_10";;\
-		esac; \
-		sleep 0.1; \
-		clear; \
-	done
-	@echo "need to stabilize the location of the cubes in each frame *!!"
-
-.PHONY: cube
+# ----------------------------------- ANSI ----------------------------------- #
 # **************************************************************************** #
 ESC			:= \033
 
@@ -606,10 +400,8 @@ TOP_LEFT	:= $(ESC)[1;1H
 ERASE_REST	:= $(ESC)[K
 ERASE_LINE	:= $(ESC)[2K
 ERASE_ALL	:= $(ESC)[2J
-# **************************************************************************** #
-# ---------------------------------- COLORS ---------------------------------- #
-# **************************************************************************** #
-# Text
+
+# Text color
 BLACK		:= $(ESC)[30m
 RED			:= $(ESC)[91m
 GREEN		:= $(ESC)[32m
@@ -621,161 +413,17 @@ CYAN		:= $(ESC)[96m
 WHITE		:= $(ESC)[37m
 GRAY		:= $(ESC)[90m
 
-# **************************************************************************** #
-# ---------------------------------- TESTS ----------------------------------- #
-# **************************************************************************** #
+# Background
+BG_BLACK	:= $(ESC)[40m
+BG_RED		:= $(ESC)[101m
+BG_GREEN	:= $(ESC)[102m
+BG_YELLOW	:= $(ESC)[103m
+BG_ORANGE	:= $(ESC)[48;5;208m
+BG_BLUE		:= $(ESC)[104m
+BG_PURPLE	:= $(ESC)[105m
+BG_CYAN		:= $(ESC)[106m
+BG_WHITE	:= $(ESC)[47m
+BG_GRAY		:= $(ESC)[100m
 
-
-# tests (a trier)
-
-# ifeq ($(shell uname),Linux)
-# 	GLFW_DIR := /usr/include/GLFW/
-# 	GLFW_EXISTS := $(shell pkg-config --exists glfw3 && echo TRUE)
-# 	ifeq ($(GLFW_EXISTS), TRUE)
-# 		LIBRARIES += -lglfw -ldl -lm -pthread
-# 	else
-# 		$(error GLFW not found. Please run 'make dep' to install necessary packages.)
-# 	endif
-# else ifeq ($(shell uname),Darwin)
-# 	BREW_EXISTS := $(shell brew --version && echo TRUE)
-# 	ifeq ($(BREW_EXISTS), TRUE)
-# 		GLFW_EXISTS := $(shell brew list --formula | grep glfw && echo TRUE)
-# 		ifeq ($(GLFW_EXISTS), TRUE)
-# 			LIBRARIES += -lglfw -framework Cocoa -framework OpenGL -framework IOKit
-# 		else
-# 			$(error GLFW not found. Please run 'make dep' to install necessary packages.)
-# 		endif
-# 	else
-# 		$(error Homebrew not found. Please run 'make dep' to install necessary packages.)
-# 	endif
-# 	GLFW_DIR := $(shell brew --prefix glfw)$(LIB_DIR)
-# else
-# 	$(error Unsupported operating system: $(shell uname))
-# endif
-
-# # **************************************************************************** #
-
-# # //
-# VOID := /dev/null
-
-# ifeq ($(shell uname),Linux)
-# 	cmake_check := $(shell cmake --version > $(VOID))
-# 	install_packages:
-# 	@echo "Installing required packages..."
-# 	@sudo apt update > $(VOID) 2>&1
-# 	@sudo apt install -y build-essential libx11-dev libglfw3-dev libglfw3 xorg-dev > $(VOID)
-# 	@if [ ! -z "$(cmake_check)" ]; then \
-# 		echo "To compile MLX42, please run 'make cmake' to install CMake.";	\
-# 	fi
-# else ifeq ($(shell uname),Darwin)
-# 	brew_check := $(shell brew --version > $(VOID))
-# 	cmake_check := $(shell cmake --version > $(VOID))
-# 	install_packages:
-# 		@echo "Installing required packages..."
-# 		@if [ ! -z "$(brew_check)" ]; then \
-# 			brew install glfw; \
-# 		elif [ ! -z "$(cmake_check)" ]; then \
-# 			echo "To install GLFW, please run 'make brew' to install Homebrew."; \
-# 		else \
-# 			echo "To compile MLX42 and/or install CMake, please run 'make cmake' to install CMake."; \
-# 		fi
-# else
-# 	$(error Unsupported operating system: $(shell uname))
-# endif
-
-# # 'dep' target to install dependencies
-# dep: install_packages
-# 	@echo "Dependencies installed."
-
-# # 'brew' target to install Homebrew
-# brew:
-# 	@echo "Installing Homebrew..."
-# 	@/bin/bash -c \
-# 	"$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# # installing cmake with brew if on mac, or with apt if on linux
-# cmake:
-# ifeq ($(shell uname),Darwin)
-# 	@echo "Installing CMake..."
-# 	@brew install cmake
-# else ifeq ($(shell uname),Linux)
-# 	@echo "Installing CMake..."
-# 	@sudo apt install -y cmake
-# else
-# 	$(error Unsupported operating system: $(shell uname)) //*to fix and test
-
-
-
-# **************************************************************************** #
-# info
-# **************************************************************************** #
-
-# OPENGL is a cross-platform API for rendering 2D and 3D graphics.
-
-# GLFW is a library that provides a simple API for 
-#	creating windows, contexts and surfaces, receiving input and events.
-
-# explaining the LIBRARIESvariable:
-# -L$(GLFW_DIR)		: tells the compiler where to find the GLFW library
-# (the '-L' is a flag that tells the compiler to look in the directory that follows for the library)
-
-# $(MLX42) $(LIBFT)	: tells the compiler to link the MLX42 and LIBFT libraries (the .a files)
-
-
-# (the '-l' is a flag that tells the compiler to link the library that follows)
-# -lglfw			: tells the compiler to link the GLFW library
-# -ldl				: tells the compiler to link the dynamic loading library
-# -pthread			: tells the compiler to link the pthread library
-# -lm				: tells the compiler to link the math library
-
-# (glfw : the name of the library, without the 'lib' prefix and the '.a' suffix,
-# 	used for managing windows, contexts, surfaces, input and events)
-
-# the (3) after -lglfw is a version specifier indicating 
-# a specific version of the GLFW library to link against.
-# On macOS (which uses the Mach-O binary format), 
-# frameworks are used to link libraries. 
-# The -lglfw(3) syntax is specific to macOS and 
-# denotes linking against GLFW version 3.
-# On Linux (which typically uses the ELF binary format), 
-# libraries are linked using the -l option 
-# followed by the library name without a version specifier.
-
-# (dl : used for dynamic loading) (meaning that it loads libraries at runtime)
-
-# (pthread : used for multithreading)
-# (links the program with the POSIX threads library,
-# enabling multithreading capabilities in the resulting executable,
-# allowing for concurrent execution of tasks across multiple threads.)
-
-# (m : used for math)
-# (even if we include the math.h header file, we still need to link the math library,
-# because the math.h header file only contains the declarations of the math functions,
-# not the actual code that implements them)
-# ///
-
-# := (Simple Assignment):
-
-# Variables assigned with := use immediate or simple assignment.
-# The right-hand side of the assignment is expanded once at the time of assignment.
-# The variable value will remain the same throughout the makefile, 
-# even if the value of other variables changes later.
-# This type of assignment is useful when you want to evaluate the value only once 
-# and have a fixed value for the variable.
-
-# = (Recursive Assignment):
-
-# Variables assigned with = use recursive assignment.
-# The right-hand side of the assignment is not expanded immediately; 
-# instead, it is expanded whenever the variable is used.
-# The variable value will be evaluated each time it is referenced, 
-# allowing for dynamic or delayed evaluation.
-# This type of assignment is useful when you want the variable to reflect changes in other variables 
-# or when you want the value to be evaluated at the time of usage.
-
-
-
-
-# ///
-# (The -j4 flag enables parallel compilation by running up to four simultaneous jobs,
-# improving build time by utilizing multiple cores or threads.
+# compilation example without makefile and flags
+# gcc -fsanitize=address src/image_utils.c src/animate.c src/main.c -ldl -L/Users/cdumais/.brew/opt/glfw/lib -lglfw -lm -lpthread -Llib/MLX42/build -lmlx42 -Llib/libft/ -lft -Ilib/MLX42/include/MLX42 -Ilib/libft/inc -Iinc
