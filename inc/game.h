@@ -80,6 +80,7 @@ typedef struct s_game
 	mlx_image_t				*foreground;
 	mlx_image_t				*difficulty_imgs[DIFFICULTY_LEN];
 	t_animation				*select_animation;
+	t_list					*random_dinos;
 	enum menu_selection		menu_selection;
 	enum game_status		game_status;
 	enum game_difficulty	game_difficulty;
@@ -97,6 +98,7 @@ void		update_animation(t_animation *a, double delta_time);
 
 
 void	error(void);
+void	bait(void *ptr);
 
 
 #endif

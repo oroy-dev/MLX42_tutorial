@@ -6,11 +6,12 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 13:43:54 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/22 17:51:43 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/22 18:30:54 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "game.h"
+#include "dinos.h"
 
 void	error(void)
 {
@@ -88,7 +89,17 @@ t_game	init_game(char *title)
 
 	return ((t_game){mlx, img, img2, foreground_img, \
 	{difficulty_imgs[0], difficulty_imgs[1], difficulty_imgs[2]}, \
-	animation, SELECT_PLAY, MENU, EASY});
+	animation, NULL, SELECT_PLAY, MENU, EASY});
+}
+
+/* ************************************************************************** */
+
+void	init_dinos(t_game *game)
+{
+	ft_lstadd_back(&game->random_dinos, ft_lstnew(create_dino("./img/dino_doux.png", game->mlx)));
+	ft_lstadd_back(&game->random_dinos, ft_lstnew(create_dino("./img/dino_mort.png", game->mlx)));
+	ft_lstadd_back(&game->random_dinos, ft_lstnew(create_dino("./img/dino_tard.png", game->mlx)));
+	ft_lstadd_back(&game->random_dinos, ft_lstnew(create_dino("./img/dino_vita.png", game->mlx)));
 }
 
 /* ************************************************************************** */
@@ -115,6 +126,18 @@ t_list	*ft_lstget(t_list *lst, int index)
 	return (NULL);
 }
 
+void	ft_lstiter_param(t_list *lst, void (*f)(void *, void *), void *ptr)
+{
+	t_list	*tmp;
+
+	tmp = lst;
+	while (tmp != NULL)
+	{
+		f(tmp->content, ptr);
+		tmp = tmp->next;
+	}
+}
+
 /* ************************************************************************** */
 
 void	update(void *ptr)
@@ -131,7 +154,7 @@ void	update(void *ptr)
 	// clean the foreground
 	ft_memset(game->foreground->pixels, 0xFF000000, \
 	game->foreground->width * game->foreground->height * PIXEL_SIZE);
-	
+
 	if (game->game_status == MENU)
 	{
 		// paint the select animation on the foreground
@@ -159,6 +182,16 @@ void	update(void *ptr)
 		if (mlx_is_key_down(game->mlx, MLX_KEY_UP))
 			game->menu_selection = SELECT_PLAY;
 	}
+	
+	// if (game->status == SCORE)
+	// {
+	// 	// update the dinos!
+	// 	ft_lstiter_param(game->random_dinos, update_dinos, game);
+	// }
+	// else if (game->game_status == PLAYING)
+	// {
+	// 	// put the number (amount) of each color selection
+	// }
 }
 
 void	key_update(mlx_key_data_t data, void *param)
@@ -202,7 +235,10 @@ void	key_update(mlx_key_data_t data, void *param)
 
 int main(void)
 {
-	t_game	game = init_game("Color Game");
+	t_game	game;
+	
+	game = init_game("Color Game");
+	init_dinos(&game);
 	
 	if (mlx_image_to_window(game.mlx, game.foreground, 0, 0) == -1)
 		error();
@@ -213,7 +249,23 @@ int main(void)
 
 	ft_lstclear(&game.select_animation->frames, bait);
 	free(game.select_animation);
+
+	// Free random dinos
+	ft_lstclear(&game.random_dinos, destroy_dino);
+	free(game.random_dinos);
 	
 	mlx_terminate(game.mlx);
 	return (SUCCESS);
 }
+
+
+/*
+We should use an enum to represent the dino actions, but the enum should start at 1 instead of 0.
+This will help up later to gather the index for the correct animation. Each animation has a "mirrored" version.
+The dino can be running to the left or to the right, each action can be to the left or right (mirrored).
+In total it's 8 animations. (iddle, running, exploding, jumping, iddle mirrored, running mirrored, exploding mirrored & jumping mirrored)
+*/
+
+
+
+
