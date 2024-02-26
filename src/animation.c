@@ -1,16 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   animate.c                                          :+:      :+:    :+:   */
+/*   animation.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/08 20:10:35 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/22 17:31:37 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/25 19:29:59 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "game.h"
+#include "animation.h"
+
+void	error(void);
+void	draw_pixel(mlx_image_t *img, int x, int y, int color);
+int		get_pixel(mlx_image_t* img, t_u32 x, t_u32 y);
 
 t_sprite	new_sprite(char *filepath, mlx_t *mlx)
 {

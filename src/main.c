@@ -6,7 +6,7 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 13:43:54 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/22 18:30:54 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/25 19:52:13 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ t_game	init_game(char *title)
 	mlx_image_t		*foreground_img;
 	mlx_image_t		*difficulty_imgs[DIFFICULTY_LEN];
 	t_animation		*animation;
+	t_animation		*small_animation;
 	t_sprite		sprite;
 
 	// start mlx
@@ -82,6 +83,12 @@ t_game	init_game(char *title)
 	(sprite_slice){0, 0, 128, 32, 0, 0}, FALSE, 5, 120);
 	destroy_sprite(&sprite);
 
+	// sprite and animation (small select)
+	sprite = new_sprite("./img/small_select_sprite_sheet.png", mlx);
+	small_animation = slice_sprite(&sprite, \
+	(sprite_slice){0, 0, 32, 32, 0, 0}, false, 4, 120);
+	destroy_sprite(&sprite);
+
 	// foreground
 	foreground_img = mlx_new_image(mlx, TUTO_WIDTH, TUTO_HEIGHT);
 	if (!foreground_img)
@@ -89,7 +96,8 @@ t_game	init_game(char *title)
 
 	return ((t_game){mlx, img, img2, foreground_img, \
 	{difficulty_imgs[0], difficulty_imgs[1], difficulty_imgs[2]}, \
-	animation, NULL, SELECT_PLAY, MENU, EASY});
+	animation, small_animation, NULL, SELECT_PLAY, MENU, EASY, \
+	RED_SELECT, {255, 255, 255}});
 }
 
 /* ************************************************************************** */
@@ -144,6 +152,7 @@ void	update(void *ptr)
 {
 	static int	fps;
 	static int	menu_selection_coords[SELECTION_LEN][SELECTION_LEN] = {{256, 160}, {256, 256}};
+	static int	color_selection_coords[COLOR_SELECTION_LEN][2] = {{320, 256}, {416, 256}, {512, 256}};
 	t_game		*game;
 	mlx_image_t	*frame;
 
@@ -155,7 +164,20 @@ void	update(void *ptr)
 	ft_memset(game->foreground->pixels, 0xFF000000, \
 	game->foreground->width * game->foreground->height * PIXEL_SIZE);
 
-	if (game->game_status == MENU)
+	if (game->game_status == PLAYING)
+	{
+		// paint the small_select animation on the foreground
+		frame = (mlx_image_t *)ft_lstget(\
+		game->small_select_animation->frames, \
+		game->small_select_animation->current_frame_num)->content;
+		if (!frame)
+			error();
+		put_img_to_img(game->foreground, frame, \
+		color_selection_coords[game->color_selection][0], \
+		color_selection_coords[game->color_selection][1]);
+		update_animation(game->small_select_animation, game->mlx->delta_time); // !!
+	}
+	else if (game->game_status == MENU)
 	{
 		// paint the select animation on the foreground
 		frame = (mlx_image_t *)ft_lstget(\
@@ -202,6 +224,20 @@ void	key_update(mlx_key_data_t data, void *param)
 	if (data.key == ESC)
 		mlx_close_window(game->mlx);
 	
+	if (game->game_status == PLAYING && data.action == MLX_PRESS)
+	{
+		if (data.key == MLX_KEY_LEFT)
+		{
+			game->color_selection--;
+			if ((int)game->color_selection == -1)
+				game->color_selection = COLOR_SELECTION_LEN - 1;
+		}
+		else if (data.key == MLX_KEY_RIGHT)
+		{
+			game->color_selection++;
+			game->color_selection %= COLOR_SELECTION_LEN;
+		}
+	}
 	if (game->game_status == MENU && data.action == MLX_RELEASE)
 	{
 		if (data.key == MLX_KEY_ENTER)
@@ -249,6 +285,8 @@ int main(void)
 
 	ft_lstclear(&game.select_animation->frames, bait);
 	free(game.select_animation);
+	ft_lstclear(&game.small_select_animation->frames, bait);
+	free(game.small_select_animation);
 
 	// Free random dinos
 	ft_lstclear(&game.random_dinos, destroy_dino);

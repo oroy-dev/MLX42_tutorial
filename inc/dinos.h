@@ -6,16 +6,16 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/22 17:58:06 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/22 18:00:26 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/25 19:27:40 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef DINOS_H
 # define DINOS_H
 
-#include <stdbool.h>
 #include "MLX42.h"
 #include "libft.h"
+#include <stdbool.h>
 
 enum dino_action
 {
