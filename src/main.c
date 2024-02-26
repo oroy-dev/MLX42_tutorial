@@ -6,7 +6,7 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/20 13:43:54 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/25 19:52:13 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/26 13:05:46 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ t_game	init_game(char *title)
 	mlx_t			*mlx;
 	mlx_image_t		*img;
 	mlx_image_t		*img2;
+	mlx_image_t		*img3;
 	mlx_image_t		*foreground_img;
 	mlx_image_t		*difficulty_imgs[DIFFICULTY_LEN];
 	t_animation		*animation;
@@ -70,9 +71,11 @@ t_game	init_game(char *title)
 	// load background and menu images
 	img = load_png("./img/menu_bg.png", mlx);
 	img2 = load_png("./img/game_bg.png", mlx);
+	img3 = load_png("./img/score_bg.png", mlx);
 
-	// disable game background for now
+	// disable game and score background for now
 	img2->instances[0].enabled = false;
+	img3->instances[0].enabled = false;
 	difficulty_imgs[0] = load_png("./img/menu_easy.png", mlx);
 	difficulty_imgs[1] = load_png("./img/menu_medium.png", mlx);
 	difficulty_imgs[2] = load_png("./img/menu_hard.png", mlx);
@@ -80,7 +83,7 @@ t_game	init_game(char *title)
 	// sprite and animation
 	sprite = new_sprite("./img/select_sprite_sheet.png", mlx);
 	animation = slice_sprite(&sprite, \
-	(sprite_slice){0, 0, 128, 32, 0, 0}, FALSE, 5, 120);
+	(sprite_slice){0, 0, 128, 32, 0, 0}, false, 5, 120);
 	destroy_sprite(&sprite);
 
 	// sprite and animation (small select)
@@ -94,9 +97,9 @@ t_game	init_game(char *title)
 	if (!foreground_img)
 		error();
 
-	return ((t_game){mlx, img, img2, foreground_img, \
+	return ((t_game){mlx, img, img2, img3, foreground_img, \
 	{difficulty_imgs[0], difficulty_imgs[1], difficulty_imgs[2]}, \
-	animation, small_animation, NULL, SELECT_PLAY, MENU, EASY, \
+	{0}, animation, small_animation, NULL, SELECT_PLAY, MENU, EASY, \
 	RED_SELECT, {255, 255, 255}});
 }
 
@@ -147,7 +150,6 @@ void	ft_lstiter_param(t_list *lst, void (*f)(void *, void *), void *ptr)
 }
 
 /* ************************************************************************** */
-
 void	update(void *ptr)
 {
 	static int	fps;
@@ -164,9 +166,14 @@ void	update(void *ptr)
 	ft_memset(game->foreground->pixels, 0xFF000000, \
 	game->foreground->width * game->foreground->height * PIXEL_SIZE);
 
-	if (game->game_status == PLAYING)
+		if (game->game_status == SCORE)
 	{
-		// paint the small_select animation on the foreground
+		// update the dinos!
+		ft_lstiter_param(game->random_dinos, update_dinos, game);
+	}
+	else if (game->game_status == PLAYING)
+	{
+		// draw the small selection animation on the foreground
 		frame = (mlx_image_t *)ft_lstget(\
 		game->small_select_animation->frames, \
 		game->small_select_animation->current_frame_num)->content;
@@ -175,11 +182,48 @@ void	update(void *ptr)
 		put_img_to_img(game->foreground, frame, \
 		color_selection_coords[game->color_selection][0], \
 		color_selection_coords[game->color_selection][1]);
-		update_animation(game->small_select_animation, game->mlx->delta_time); // !!
+		update_animation(game->small_select_animation, game->mlx->delta_time);
+
+		// draw the circles
+		int		user_color = get_rgba(game->selected_colors[RED_SELECT], game->selected_colors[GREEN_SELECT], game->selected_colors[BLUE_SELECT], 255);
+		t_point	circle_center = (t_point){(TUTO_WIDTH / 20) * 13.5, (TUTO_HEIGHT / 5) * 2};
+		draw_circle(game->foreground, circle_center, 72, 0xFF);
+		draw_circle(game->foreground, circle_center, 70, 0x4287F5FF);
+		draw_circle(game->foreground, circle_center, 42, user_color);
+
+		// put the number (amount) of each color selection
+		int	n = 0;
+		while (n < COLOR_SELECTION_LEN)
+		{
+			char	*num_str = ft_itoa(game->selected_colors[n]);
+			int		padding_left = 0;
+			if (game->selected_colors[n] < 100)
+				padding_left += 6;
+			if (game->selected_colors[n] < 9)
+				padding_left += 5;
+			game->font_imgs[n] = mlx_put_string(game->mlx, num_str, 0, 0);
+			free(num_str);
+			int	i = 0;
+			while (i < (int)game->font_imgs[n]->width)
+			{
+				int	j = 0;
+				while (j < (int)game->font_imgs[n]->height)
+				{
+					if (get_pixel(game->font_imgs[n], i, j) != 0)
+						draw_pixel(game->font_imgs[n], i, j, 0x424242FF);
+					j++;
+				}
+				i++;
+			}
+			put_img_to_img(game->foreground, game->font_imgs[n], \
+			color_selection_coords[n][0] + padding_left, color_selection_coords[n][1] + 5);
+			mlx_delete_image(game->mlx, game->font_imgs[n]);
+			n++;
+		}
 	}
 	else if (game->game_status == MENU)
 	{
-		// paint the select animation on the foreground
+		// draw the select animation on the foreground
 		frame = (mlx_image_t *)ft_lstget(\
 		game->select_animation->frames, \
 		game->select_animation->current_frame_num)->content;
@@ -204,16 +248,6 @@ void	update(void *ptr)
 		if (mlx_is_key_down(game->mlx, MLX_KEY_UP))
 			game->menu_selection = SELECT_PLAY;
 	}
-	
-	// if (game->status == SCORE)
-	// {
-	// 	// update the dinos!
-	// 	ft_lstiter_param(game->random_dinos, update_dinos, game);
-	// }
-	// else if (game->game_status == PLAYING)
-	// {
-	// 	// put the number (amount) of each color selection
-	// }
 }
 
 void	key_update(mlx_key_data_t data, void *param)
@@ -223,7 +257,26 @@ void	key_update(mlx_key_data_t data, void *param)
 	game = (t_game *)param;
 	if (data.key == ESC)
 		mlx_close_window(game->mlx);
-	
+
+	if (game->game_status == PLAYING && (data.action == MLX_REPEAT || data.action == MLX_PRESS))
+	{
+		if (data.key == MLX_KEY_ENTER)
+		{
+			game->game_bg_img->instances[0].enabled = false;
+			game->score_bg_img->instances[0].enabled = true;
+			game->game_status = SCORE;
+		}
+		if (data.key == MLX_KEY_DOWN)
+		{
+			if (game->selected_colors[game->color_selection] > 0)
+				game->selected_colors[game->color_selection]--;
+		}
+		else if (data.key == MLX_KEY_UP)
+		{
+			if (game->selected_colors[game->color_selection] < 255)
+				game->selected_colors[game->color_selection]++;
+		}
+	}
 	if (game->game_status == PLAYING && data.action == MLX_PRESS)
 	{
 		if (data.key == MLX_KEY_LEFT)

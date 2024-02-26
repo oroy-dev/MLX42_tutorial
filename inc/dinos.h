@@ -6,7 +6,7 @@
 /*   By: cdumais <cdumais@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/22 17:58:06 by cdumais           #+#    #+#             */
-/*   Updated: 2024/02/25 19:27:40 by cdumais          ###   ########.fr       */
+/*   Updated: 2024/02/26 13:07:23 by cdumais          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,8 @@ typedef struct s_dino
 	t_list				*actions; //list of all the dino actions, 8 total animations
 }						t_dino;
 
-void	destroy_dino(void *ptr);
 t_dino	*create_dino(char *filepath, mlx_t *mlx);
+void	update_dinos(void *ptr1, void *ptr2);
+void	destroy_dino(void *ptr);
 
 #endif
